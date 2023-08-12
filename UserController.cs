@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using project4.Data;
 using project4.Models;
-using project4.Models.ViewModels;
-using BCrypt.Net;
+using System.Linq;
 using System.Threading.Tasks;
-using MongoDB.Driver;
+using System.Security.Cryptography;
+using project4.Models.ViewModels;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
-namespace project4.Controllers
+namespace YourProjectName.Controllers
 {
     public class UserController : Controller
     {
@@ -19,27 +21,27 @@ namespace project4.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var users = await _context.Users.Find(_ => true).ToListAsync();
+            var users = await _context.Users.ToListAsync();
             return View(users);
         }
 
-        public async Task<IActionResult> BlockUser(string id)
+        public async Task<IActionResult> BlockUser(int id)
         {
-            var user = await _context.Users.Find(u => u.Id == id).FirstOrDefaultAsync();
+            var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
 
             user.Status = UserStatus.Blocked;
-            await _context.Users.ReplaceOneAsync(u => u.Id == id, user);
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> UnblockUser(string id)
+        public async Task<IActionResult> UnblockUser(int id)
         {
-            var user = await _context.Users.Find(u => u.Id == id).FirstOrDefaultAsync();
+            var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
 
             user.Status = UserStatus.Active;
-            await _context.Users.ReplaceOneAsync(u => u.Id == id, user);
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -53,22 +55,37 @@ namespace project4.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Hash the password
-                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
-
-
-                // Create a new user with hashed password and active status
-                var newUser = new User
+                if (model.Password != null)
                 {
-                    Name = model.Name,
-                    Email = model.Email,
-                    PasswordHash = hashedPassword,
-                    Status = UserStatus.Active
-                };
+                    // Generate a random salt
+                    byte[] salt = new byte[128 / 8];
+                    using (var rng = RandomNumberGenerator.Create())
+                    {
+                        rng.GetBytes(salt);
+                    }
 
-                await _context.Users.InsertOneAsync(newUser);
+                    // Hash the password
+                    string hashedPassword = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                        password: model.Password,
+                        salt: salt,
+                        prf: KeyDerivationPrf.HMACSHA1,
+                        iterationCount: 10000,
+                        numBytesRequested: 256 / 8));
 
-                return RedirectToAction("Login", "Account"); // Redirect to login or another page
+                    // Create a new user with hashed password and active status
+                    var newUser = new User
+                    {
+                        Name = model.Name,
+                        Email = model.Email,
+                        PasswordHash = hashedPassword,
+                        Status = UserStatus.Active
+                    };
+
+                    _context.Users.Add(newUser);
+                    await _context.SaveChangesAsync();
+
+                    return RedirectToAction("Login", "Account"); // Redirect to login or another page
+                }
             }
 
             // If registration fails, show errors
@@ -76,6 +93,7 @@ namespace project4.Controllers
         }
 
         // Other actions...
+
     }
 }
 
