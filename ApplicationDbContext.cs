@@ -1,19 +1,35 @@
-﻿using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using project4.Models;
 
 namespace project4.Data
 {
-    public class ApplicationDbContext
+    public class ApplicationDbContext : DbContext
     {
-        private readonly IMongoDatabase _database;
-
-        public ApplicationDbContext(string connectionString, string databaseName)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
         {
-            var client = new MongoClient(connectionString);
-            _database = client.GetDatabase(databaseName);
         }
 
-        public IMongoCollection<User> Users => _database.GetCollection<User>("Users");
+        public DbSet<User> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure User entity
+            modelBuilder.Entity<User>(entity =>
+            {
+                // Hashed password
+                entity.Property(u => u.PasswordHash)
+                      .IsRequired();
+
+                // User status
+                entity.Property(u => u.Status)
+                      .IsRequired()
+                      .HasConversion<string>(); // Convert enum to string for storage
+            });
+        }
     }
 }
 
