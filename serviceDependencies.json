@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "mongodb1": {
+      "ignored": "true",
+      "type": "mongodb"
+    },
+    "secrets1": {
+      "type": "secrets",
+      "dynamicId": null
+    },
+    "mssql1": {
+      "type": "mssql",
+      "connectionId": "localhost"
+    },
+    "appInsights1": {
+      "type": "appInsights"
+    }
+  }
+}

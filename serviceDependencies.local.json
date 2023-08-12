@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "mongodb1": {
+      "ignored": "true",
+      "type": "mongodb"
+    },
+    "secrets1": {
+      "type": "secrets.user",
+      "dynamicId": null
+    },
+    "mssql1": {
+      "serviceConnectorResourceId": "",
+      "secretStore": "LocalSecretsFile",
+      "resourceId": null,
+      "type": "mssql.local",
+      "connectionId": "localhost"
+    },
+    "appInsights1": {
+      "type": "appInsights.sdk"
+    }
+  }
+}
