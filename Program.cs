@@ -1,45 +1,36 @@
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using project4.Data;
 
-namespace task4
+namespace project4
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-
-            // Configure MongoDB
-            builder.Services.AddSingleton<ApplicationDbContext>(_ =>
-                new ApplicationDbContext("mongodb://localhost:27017", "project4"));
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
-
-            app.Run();
+            CreateHostBuilder(args).Build().Run();
         }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                    // UseUrls is not needed here
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    // Add services to the container.
+                    services.AddControllersWithViews();
+
+                    // Configure ApplicationDbContext using SQL Server
+                    var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
+                    services.AddDbContext<ApplicationDbContext>(options =>
+                        options.UseSqlServer(connectionString));
+                });
     }
 }
 
