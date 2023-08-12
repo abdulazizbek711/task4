@@ -1,35 +1,29 @@
-﻿using System;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace project4.Models
 {
     public class User
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; }
+        public int Id { get; set; }
 
-        [BsonRequired]
+        [Required]
         public string? Name { get; set; }
 
-        [BsonRequired]
+        [Required]
+        [EmailAddress]
         public string? Email { get; set; }
 
-        [BsonRequired]
         public DateTime LastLoginTime { get; set; }
 
-        [BsonRequired]
         public DateTime RegistrationTime { get; set; }
 
-        [BsonRequired]
         public bool IsBlocked { get; set; }
 
-        [BsonRequired]
+        [Required]
         public string? PasswordHash { get; set; }
 
-        [BsonRequired]
-        [BsonRepresentation(BsonType.String)] // Store enum as string
+        [Required]
         public UserStatus Status { get; set; }
 
         public User()
